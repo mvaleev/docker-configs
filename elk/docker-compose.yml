@@ -1,0 +1,80 @@
+version: '2'
+
+services:
+  elk-elasticsearch:
+    build: elk-elasticsearch/
+    container_name: elk-elasticsearch
+    volumes:
+      - elasticdata:/usr/share/elasticsearch/data
+      - ./elk-elasticsearch/config/elasticsearch.yml:/etc/elasticsearch/elasticsearch.yml
+    expose:
+      - "9200"
+      - "9300"
+    environment:
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+    networks:
+      - net
+
+  elk-logstash:
+    build: elk-logstash/
+    container_name: elk-logstash
+    command: -f /etc/logstash/conf.d/
+    volumes:
+      - ./elk-logstash/config/logstash.conf:/etc/logstash/conf.d/logstash.conf
+      - ./elk-logstash/config/GeoLite2City.mmdb:/etc/logstash/GeoLite2City.mmdb
+    ports:
+      - "5959:5959"
+      - "5044:5044"
+    networks:
+      - net
+    depends_on:
+      - elk-elasticsearch
+
+  elk-kibana:
+    build: elk-kibana/
+    container_name: elk-kibana
+    volumes:
+      - ./elk-kibana/config/:/etc/kibana/
+    expose:
+      - "5601"
+    ports:
+      - "127.0.0.1:5601:5601"
+    networks:
+      - net
+    depends_on:
+      - elk-elasticsearch
+
+  elk-curator:
+    build: elk-curator/
+    container_name: elk-curator
+    command: --config /root/elk-curator/curator_config.yml /root/elk-curator/curator_action.yml
+    volumes:
+      - ./elk-curator/config/:/root/elk-curator
+    networks:
+      - net
+    depends_on:
+      - elk-elasticsearch
+
+  elk-elastalert:
+    build: elk-elastalert/
+    container_name: elk-elastalert
+    volumes:
+      - ./elk-elastalert/config:/opt/elastalert/config
+      - ./elk-elastalert/rules:/opt/elastalert/rules
+    environment:
+      ELASTICSEARCH_HOST: elk-elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      ELASTALERT_CONFIG: /opt/elastalert/config/elastalert.yaml
+    networks:
+      - net
+    depends_on:
+      - elk-elasticsearch
+
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  elasticdata:
+

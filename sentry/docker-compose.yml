@@ -1,0 +1,124 @@
+version: '3'
+
+services:
+  redis:
+    image: redis
+    container_name: sentry-redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    sysctls:
+      - net.core.somaxconn=1024
+    volumes:
+      - ./configs/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - net
+    logging:
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+  postgres:
+    image: postgres
+    container_name: sentry-postgres
+    environment:
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_USER: sentry
+      POSTGRES_DB: sentry
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - net
+    logging:
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+  sentry:
+    image: sentry
+    container_name: sentry-web
+    environment:
+      SENTRY_SECRET_KEY: 'KEY'
+      SENTRY_POSTGRES_HOST: sentry-postgres
+      SENTRY_DB_PASSWORD: 'postgres'
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_NAME: sentry
+      SENTRY_REDIS_HOST: sentry-redis
+      SENTRY_EMAIL_HOST: 'HOST'
+      SENTRY_EMAIL_USER: 'USER'
+      SENTRY_EMAIL_PASSWORD: 'PASSWORD
+      SENTRY_SERVER_EMAIL: 'EMAIL
+      SENTRY_EMAIL_USE_TLS: 'true'
+    volumes:
+      - filesdata:/var/lib/sentry/files
+    networks:
+      - net
+    ports:
+      - "127.0.0.1:9000:9000"
+    depends_on:
+      - sentry-redis
+      - sentry-postgres
+    logging:
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+  sentrycron:
+    image: sentry
+    container_name: sentry-cron
+    command: sentry run cron
+    environment:
+      SENTRY_SECRET_KEY: 'KEY'
+      SENTRY_POSTGRES_HOST: sentry-postgres
+      SENTRY_DB_PASSWORD: 'postgres'
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_NAME: sentry
+      SENTRY_REDIS_HOST: sentry-redis
+      SENTRY_EMAIL_HOST: 'HOST'
+      SENTRY_EMAIL_USER: 'USER'
+      SENTRY_EMAIL_PASSWORD: 'PASSWORD
+      SENTRY_SERVER_EMAIL: 'EMAIL
+      SENTRY_EMAIL_USE_TLS: 'true'
+    networks:
+      - net
+    depends_on:
+      - sentry-redis
+      - sentry-postgres
+    logging:
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+  sentryworker:
+    image: sentry
+    container_name: sentry-worker
+    command: sentry run worker
+    environment:
+      SENTRY_SECRET_KEY: 'KEY'
+      SENTRY_POSTGRES_HOST: sentry-postgres
+      SENTRY_DB_PASSWORD: 'postgres'
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_NAME: sentry
+      SENTRY_REDIS_HOST: sentry-redis
+      SENTRY_EMAIL_HOST: 'HOST'
+      SENTRY_EMAIL_USER: 'USER'
+      SENTRY_EMAIL_PASSWORD: 'PASSWORD
+      SENTRY_SERVER_EMAIL: 'EMAIL
+      SENTRY_EMAIL_USE_TLS: 'true'
+    networks:
+      - net
+    depends_on:
+      - sentry-redis
+      - sentry-postgres
+    logging:
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  filesdata:
+

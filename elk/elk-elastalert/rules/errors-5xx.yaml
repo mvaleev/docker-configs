@@ -1,0 +1,24 @@
+es_host: elk-elasticsearch
+name: Hight-5XX
+index: logstash-nginx-*
+
+type: frequency
+filter:
+- range:
+    nginx-status:
+      from: 500
+      to: 599
+num_events: 50
+timeframe:
+  minutes: 5
+
+alert:
+  - "slack"
+slack_webhook_url: "https://hooks.slack.com/services/key"
+slack_username_override: "ElastAlert"
+slack_parse_override: full
+
+alert_text_type: alert_text_only
+alert_text: "За последние 5 минут произошло более 50 5xx ошибок.\n
+Топ ошибок смотреть тут http://url"
+
