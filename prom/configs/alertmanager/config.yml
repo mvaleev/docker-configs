@@ -1,0 +1,19 @@
+global:
+    resolve_timeout: 2m
+
+route:
+    group_by: ['alertname']
+    group_wait: 10s
+    group_interval: 10s
+    repeat_interval: 1h
+    receiver: 'slack'
+
+receivers:
+    - name: 'slack'
+      slack_configs:
+          - send_resolved: true
+            text: "{{ .CommonAnnotations.description }}"
+            username: 'Prometheus'
+            channel: '#monitor'
+            api_url: 'https://hooks.slack.com/services/KEY'
+

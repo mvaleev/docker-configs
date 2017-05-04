@@ -1,0 +1,67 @@
+version: '2'
+
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prom-prometheus
+    volumes:
+      - ./configs/prometheus/:/etc/prometheus/
+      - prometheusdata:/prometheus
+    command:
+      - '-config.file=/etc/prometheus/prometheus.yml'
+      - '-storage.local.path=/prometheus'
+      - '-alertmanager.url=http://prom-alertmanager:9093'
+      - '-storage.local.memory-chunks=200000'
+    restart: unless-stopped
+    expose:
+      - 9090
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - net
+
+  alertmanager:
+    image: prom/alertmanager
+    container_name: prom-alertmanager
+    volumes:
+      - ./configs/alertmanager/:/etc/alertmanager/
+      - alertmanagerdata:/alertmanager
+    command:
+      - '-config.file=/etc/alertmanager/config.yml'
+      - '-storage.path=/alertmanager'
+    restart: unless-stopped
+    expose:
+      - 9093
+    ports:
+      - 9093:9093
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - net
+
+  grafana:
+    image: grafana/grafana
+    container_name: prom-grafana
+    volumes:
+      - grafanadata:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: 'user'
+      GF_SECURITY_ADMIN_PASSWORD: 'pass'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    restart: unless-stopped
+    expose:
+      - 3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      -net
+
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  prometheusdata:
+  alertmanagerdata:
+  grafanadata:

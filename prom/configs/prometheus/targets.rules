@@ -1,0 +1,45 @@
+ALERT service_down
+  IF up == 0
+  FOR 5s
+  LABELS { severity = "critical" }
+  ANNOTATIONS {
+      summary = "Monitor service {{$labels.instance}} non-operational",
+      description = "Service {{$labels.instance}} is down.",
+  }
+
+ALERT high_cpu_load
+  IF (100 - sum(rate(node_cpu{mode="idle",instance="test"}[1m])) * 100 / count_scalar(node_cpu{mode="user",instance="test"})) > 75
+  FOR 30s
+  LABELS { severity = "critical" }
+  ANNOTATIONS {
+      summary = "Server under high load",
+      description = "Test is under high load, the avg load 1m is at {{ humanize $value}}%.",
+  }
+
+ALERT warning_memory_load
+  IF (sum(node_memory_MemTotal{instance="test"}) - sum(node_memory_MemFree{instance="test"} + node_memory_Buffers{instance="test"} + node_memory_Cached{instance="test"}) ) / sum(node_memory_MemTotal{instance="test"}) * 100 > 70
+  FOR 30s
+  LABELS { severity = "warning" }
+  ANNOTATIONS {
+      summary = "Server memory is almost full",
+      description = "Test memory usage is {{ humanize $value}}%.",
+  }
+
+ALERT high_storage_load
+  IF (node_filesystem_size{fstype="ext4",instance="test"} - node_filesystem_free{fstype="ext4",instance="test"}) / node_filesystem_size{fstype="ext4",instance="test"}  * 100 > 80
+  FOR 30s
+  LABELS { severity = "critical" }
+  ANNOTATIONS {
+      summary = "Server storage is almost full",
+      description = "Test storage usage is {{ humanize $value}}%.",
+  }
+
+ALERT high_io_load
+  IF sum(irate(node_disk_io_time_ms{instance="test"}[1m])) > 200
+  FOR 10s
+  LABELS { severity = "critical" }
+  ANNOTATIONS {
+      summary = "Server storage io is high",
+      description = "Test storage io usage is {{ humanize $value}}ms.",
+  }
+
