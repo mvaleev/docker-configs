@@ -11,7 +11,7 @@ services:
       - '-config.file=/etc/prometheus/prometheus.yml'
       - '-storage.local.path=/prometheus'
       - '-alertmanager.url=http://prom-alertmanager:9093'
-      - '-storage.local.memory-chunks=200000'
+      - '-storage.local.target-heap-size=536870912'
     restart: unless-stopped
     expose:
       - 9090
